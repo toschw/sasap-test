@@ -6,3 +6,4 @@ test repository created during the Juneau workshop
   + gala
 - bananas
 - oranges
+- kiwi
