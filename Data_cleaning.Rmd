@@ -1,0 +1,36 @@
+---
+title: "Data cleaning"
+author: "Tobias Schwoerer"
+date: "November 28, 2017"
+output: html_document
+---
+Go to the Knb, copy the URL for the data I want 
+```{r}
+catch <- read.csv("df35b.302.1.csv", stringsAsFactors = FALSE)
+```
+On a mac I could use the URL in quotes but on a PC that doesn't work as smoothly. But this following code didn't really work. Try https://stackoverflow.com/questions/4125788/reading-csv-files-over-ssl-with-r
+```{r}
+require(RCurl)
+myCsv <- getURL("https://knb.ecoinformatics.org/knb/d1/mn/v2/object/df35b.302.1", stringsAsFactors = FALSE)
+temporaryFile <- tempfile()
+con <- file(temporaryFile, open = "w")
+cat(myCsv, file = con) 
+close(con)
+
+read.csv(temporaryFile)
+```
+
+```{r}
+library(dplyr)
+library(tidyr)
+```
+Let's do some manipulations, here we delete the columns we don't need called All and notesRegCode
+```{r}
+catch <-catch %>% 
+  select(-All, -notesRegCode)
+```
+Now we switch the wide formatted data into a tall dataset using the gather function, and create a new dataset that we also call catch and basicaly overwrite the old datafile
+```{r}
+catch <- catch %>%
+  gather(species, catch, -Region, - Year)
+```
