@@ -30,7 +30,104 @@ catch <-catch %>%
   select(-All, -notesRegCode)
 ```
 Now we switch the wide formatted data into a tall dataset using the gather function, and create a new dataset that we also call catch and basicaly overwrite the old datafile
+
 ```{r}
 catch <- catch %>%
   gather(species, catch, -Region, - Year)
 ```
+
+
+```{r}
+summary(catch)
+catch_integers <- as.integer(catch$catch)
+# figuring out which ones are NA
+nas <- which(is.na(catch_integers))
+# The ADFG report shows that an i was entered when it should have been a 1
+catch[nas,"catch"] <- 1
+catch[401,]
+summary(catch)
+```
+The summary output still shows that we have some characters in the catch variable
+```{r}
+catch <- catch %>%
+  mutate(catch = as.integer(catch))
+summary(catch)
+```
+Looking at metadata on KNB showed that catch is in thousands of fish, so we need to multiply by 1000 on catch variable
+```{r}
+catch <- catch %>%
+  mutate(catch = catch*1000)
+summary(catch)
+```
+
+```{r}
+catch %>%
+  group_by(Region) %>%
+  summarize(mean_catch=mean(catch))
+```
+
+```{r}
+sample_size <- catch %>%
+  group_by(Region) %>%
+  summarize(n=n())
+summary(sample_size)
+```
+Filtering rows, say SOuthern southeast catches
+
+```{r}
+sse_catches <- catch %>%
+  filter(Region =="SSE")
+sse_catches
+```
+Filtering really small catches in Southern Southeast
+```{r}
+small_catches <- catch %>%
+  filter(catch <1000000)
+summary(small_catches)
+small_catches
+```
+Combined filtering on multiple conditions
+Large sse catches
+```{r}
+large_sse_catch <- catch %>%
+  filter(1000000 & Region == "SSE")
+summary (large_sse_catch)
+large_sse_catch
+#Doesn't seem to be sorted, so sorting it
+large_sse_catch %>%
+  arrange(species, Year)
+```
+Joining two datasets together
+
+```{r}
+region_defs <- read.csv("df35b.303.1.csv", stringsAsFactors = FALSE)
+View(region_defs)
+View(catch)
+```
+
+
+
+```{r}
+catch %>%
+  group_by(Region) %>%
+  summarise(total_catch = sum(catch)) %>%
+  left_join(region_defs, by = c("Region" = "code"))
+```
+Example for Separating dates that are fortunately all formatted equally 
+
+```{r}
+dates_df <- data.frame(date = c("5/24/1930",
+                                "5/25/1930",
+                                "5/26/1930",
+                                "5/27/1930",
+                                "5/28/1930"),
+                       stringsAsFactors = FALSE)
+dates_df
+dates_df <- dates_df %>%
+  separate(date, c("month","day","year"),"/")
+dates_df
+#undo what we just did creating a new variable called date
+dates_df %>%
+  unite(date, month, day, year, sep = "/")
+```
+
