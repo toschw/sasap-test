@@ -4,27 +4,55 @@ author: "Tobias Schwoerer"
 date: "November 29, 2017"
 output: html_document
 ---
+Use echo=FALSE to leave all the code cunchs out of the website
+the cache=TRUE option leaves output from the first dun in the cache speeding up any additional rendering that is necessary.
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r, echo=FALSE}
+escapement <- read.csv("knb.92020.1.csv",stringsAsFactors = FALSE)
+
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r}
+library(dplyr)
+library(tidyr)
+library(leaflet)
+library(ggplot2)
+library(DT)
 ```
 
-## Including Plots
+To calculate the median annual escapement by species, we first need to separate the date column to get a year column, we do this by also creating month and day columns. We use the separate function to do this. 
 
-You can also embed plots, for example:
+```{r}
+median_esc <- escapement %>%
+  separate(sampleDate, c("Year", "Month", "Day"), sep = "-")%>%
+  group_by(Species, Location, Year) %>%
+  summarise(escapement = sum(DailyCount, na.rm=TRUE))  %>%
+  group_by(Species) %>%
+  summarise(median_escapement = median(escapement))
+median_esc
+```
+See above, the best way to sum is to use the na.rm argument within the sum function  which ignores NA in calculating the sum. 
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r}
+ggplot(median_esc, aes(Species, median_escapement)) +
+  geom_col() +
+  coord_flip()
+
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+datatable(median_esc)
+```
+
+How to use the leaflet package making an interactive map
+
+```{r}
+locations <- escapement %>%
+  distinct(Location, Latitude, Longitude) %>%
+  drop_na()
+
+leaflet(locations) %>%
+  addTiles() %>%
+  addMarkers(~ - abs(Longitude), ~ Latitude, popup = ~ Location)
+
+```
