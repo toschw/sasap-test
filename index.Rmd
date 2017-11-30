@@ -12,12 +12,15 @@ escapement <- read.csv("knb.92020.1.csv",stringsAsFactors = FALSE)
 
 ```
 
-```{r}
-library(dplyr)
-library(tidyr)
-library(leaflet)
-library(ggplot2)
-library(DT)
+```{r, include=FALSE}
+supressPackageStartupMessages({
+  library(dplyr)
+  library(tidyr)
+  library(leaflet)
+  library(ggplot2)
+  library(DT) 
+})
+
 ```
 
 To calculate the median annual escapement by species, we first need to separate the date column to get a year column, we do this by also creating month and day columns. We use the separate function to do this. 
